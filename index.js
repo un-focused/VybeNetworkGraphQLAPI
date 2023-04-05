@@ -3,6 +3,8 @@ const { ApolloServer, gql } = require('apollo-server-express');
 const { config } = require('dotenv');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
+const app = express();
+
 function formatEventProperty(prop) {
     const { value } = prop;
     if (typeof value === 'string') {
@@ -154,15 +156,11 @@ async function main() {
 
     const server = new ApolloServer({ typeDefs, resolvers });
 
-    const app = express();
-
     await server.start();
 
     server.applyMiddleware({ app });
-
-    app.listen({ port: 4000 }, () =>
-        console.log(`🚀 Server ready at http://localhost:4000${ server.graphqlPath }`)
-    );
 }
 
 void main();
+
+module.exports = app;
