@@ -2,10 +2,11 @@
   "name": "vybegql",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "dev": "node scripts/build.js && node lib/index.js",
+    "build": "webpack"
   },
   "keywords": [],
   "author": "",
@@ -17,5 +18,13 @@
     "dotenv": "^16.0.3",
     "graphql": "^16.6.0",
     "mongodb": "^5.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.17.14",
+    "esbuild-node-externals": "^1.7.0",
+    "ts-loader": "^9.4.2",
+    "webpack": "^5.77.0",
+    "webpack-cli": "^5.0.1",
+    "webpack-node-externals": "^3.0.0"
   }
 }
