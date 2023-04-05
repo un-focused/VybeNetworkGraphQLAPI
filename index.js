@@ -3,19 +3,6 @@ const { ApolloServer, gql } = require('apollo-server-express');
 const { config } = require('dotenv');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
-/*
-type EventProperty {
-            name: String
-            type: String
-            value: EventPropertyType
-        }
-
-        type Event {
-            name: String
-            properties: [EventProperty]
-        }
-
- */
 function formatEventProperty(prop) {
     const { value } = prop;
     if (typeof value === 'string') {
@@ -53,7 +40,6 @@ function formatEventProperty(prop) {
                 }
             }
         }
-        // value: Array.isArray(value) ? value.map(val => formatEventProperty(val)) : formatEventProperty(value)
     }
 }
 
@@ -142,9 +128,8 @@ async function main() {
         Query: {
             transactions: async () => {
                 const data = await database.collection('transactions').find({}).toArray();
-                // console.log(JSON.stringify(data));
 
-                const res = data.map(
+                return data.map(
                     ({_id, events, signature, blockTime, confirmationStatus}) => {
                         return {
                             events: events.map(
@@ -163,10 +148,6 @@ async function main() {
                         }
                     }
                 );
-
-                // console.log(JSON.stringify(res));
-
-                return res;
             }
         },
     };
