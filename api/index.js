@@ -2,6 +2,7 @@ const express = require('express');
 const { ApolloServer, gql } = require('apollo-server-express');
 const { config } = require('dotenv');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const { startServerAndCreateLambdaHandler, handlers } = require('@as-integrations/aws-lambda');
 
 const app = express();
 
@@ -45,11 +46,7 @@ function formatEventProperty(prop) {
     }
 }
 
-async function main() {
-    if (process.env.NODE_ENV !== 'production') {
-        config();
-    }
-
+function setupApollo() {
     const uri = process.env.MONGODB_URI;
 
     const client = new MongoClient(uri,
@@ -60,11 +57,11 @@ async function main() {
         }
     );
 
-    await client.connect();
+    client.connect().then(
+        () => console.log('successfully connected!')
+    );
 
     const database = client.db('vybe');
-
-    // console.log('DATA: ', await database.collection('transactions').find({}).toArray());
 
     // Construct a schema, using GraphQL schema language
     // TODO: string to enum status
@@ -132,7 +129,7 @@ async function main() {
                 const data = await database.collection('transactions').find({}).toArray();
 
                 return data.map(
-                    ({_id, events, signature, blockTime, confirmationStatus}) => {
+                    ({ _id, events, signature, blockTime, confirmationStatus }) => {
                         return {
                             events: events.map(
                                 (event) => {
@@ -154,13 +151,28 @@ async function main() {
         },
     };
 
-    const server = new ApolloServer({ typeDefs, resolvers });
-
-    await server.start();
-
-    server.applyMiddleware({ app });
+    return new ApolloServer({ typeDefs, resolvers });
 }
 
-void main();
+if (process.env.NODE_ENV !== 'production') {
+    config();
+}
 
-module.exports = app;
+const server = setupApollo();
+
+server.applyMiddleware({ app });
+
+if (process.env.NODE_ENV === 'development') {
+    app.listen({ port: 4000 }, () =>
+        console.log(`🚀 Server ready at http://localhost:4000${ server.graphqlPath }`)
+    );
+}
+
+// This final export is important!
+module.exports = {
+    graphqlHandler: startServerAndCreateLambdaHandler(
+        server,
+        // We will be using the Proxy V2 handler
+        handlers.createAPIGatewayProxyEventV2RequestHandler()
+    )
+};
